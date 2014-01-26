@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block content %}
+  <div id="table">
+  <table>
+      <tr><th>Contacts</th><th>Standing</th></tr>
+        {{ contacts }}
+
+  </table>
+  Cached until: {{ cached }}
+  </div>
+
+{%  endblock %}

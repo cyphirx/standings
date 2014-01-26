@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h3>Check local players against ISK Efficiency standings</h3>
+    {% if success %}
+        <p>Listings will go here</p>
+        <table>
+            <th>Player</th><th>Something else?</th>
+            {{ data }}
+        </table>
+    {% endif %}
+
+
+
+
+    <h3>Paste local players into box below.</h3>
+    {% for message in get_flashed_messages() %}
+        <div class="flash">{{ message }}</div>
+    {% endfor %}
+    <form action="{{ url_for('check') }}" method=post>
+
+        {{ form.players.label }}
+        {{ form.players }}
+
+        {{ form.submit }}
+    </form>
+
+{%  endblock %}
