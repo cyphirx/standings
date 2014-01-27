@@ -1,14 +1,13 @@
 This is a hacked-together solution to track standings for an Eve Online corporation.
 
 Currently it is using flask and the following modules:
-Flask	0.10.1	0.10.1
-Flask-Restless	0.12.1	0.12.1 (not yet)
-Flask-SQLAlchemy	1.0	1.0
-Flask-WTF	0.9.4	0.9.4
-Jinja2	2.7.1	2.7.2
-SQLAlchemy	0.8.4	0.9.1
-WTForms	1.0.5	1.0.5
-Werkzeug	0.9.4	0.9.4
-lxml	2.3.6	3.3.0
-pip	1.1	1.5.2
-simplejson	3.3.0	3.3.2
+Flask	0.10.1
+Flask-Restless	0.12.1 (not yet)
+Flask-SQLAlchemy	1.0
+Flask-WTF	0.9.4
+Jinja2	2.7.1
+SQLAlchemy	0.8.4
+WTForms	1.0.5
+Werkzeug	0.9.4
+lxml	2.3.6
+simplejson	3.3.0

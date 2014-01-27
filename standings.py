@@ -4,16 +4,32 @@ from collections import OrderedDict
 from datetime import datetime
 import urllib2
 from urllib import quote_plus
-import json
 from forms import CheckerForm
+from flask.ext.sqlalchemy import SQLAlchemy
+
+from sqlalchemy import Column, Integer, Text, DateTime
 
 app = Flask(__name__)
 app.secret_key = 'development key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
+db = SQLAlchemy(app)
+
+class Record(db.Model):
+    pid = Column(Integer, primary_key=True)
+    name = Column(Text, unique=False)
+    corp = Column(Text, unique=False)
+    corpID = Column(Integer, unique=False)
+    alliance = Column(Text, unique=False)
+    allianceID = Column(Integer, unique=False)
+    added = Column(DateTime, unique=False)
+
+db.create_all()
+
 
 # Changeme settings
 keyID = 111111
 vCode = "fsdfdsfd"
-datasource = "C:\path\to\dir\standings.xml"
+datasource = "C:\Users\Brandon\PycharmProjects\standings\standings.xml"
 
 
 apiURL = "https://api.eveonline.com"
@@ -102,6 +118,8 @@ def check():
         unaffiliated = ""
         pname = ""
         players = []
+
+        # Start Iterating through players and compare against friendlies list, add to list to query CCP API
         for player in block[:]:
             if player == "":
                 continue
@@ -122,7 +140,6 @@ def check():
             print url
 
         requestAPI = urllib2.Request(url, headers={"Accept" : "application/xml"})
-
         try:
             f = urllib2.urlopen(requestAPI)
         except:
@@ -131,38 +148,23 @@ def check():
         uid_tree = ET.parse(f)
         uid_root = uid_tree.getroot()
 
-
+        # Iterate through ID's and names to start forming next API call
         for child in uid_root.findall('./result/rowset/[@name="characters"]/*'):
             contact = child.get('name')
             cID = child.get('characterID')
             if int(cID) == 0:
                  unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
-                eve_who = "http://evewho.com/api.php?type=character&id=" + cID
-                json_load = urllib2.urlopen(eve_who)
-                data = json.load(json_load)
-
-                corpID = data['info']['corporation_id']
-                allianceID = data['info']['alliance_id']
-
                 # Check if ISKHR corpid(98255477) is same as players
-                if int(corpID) == iskhr_id:
-                    continue
+ #               if int(corpID) == iskhr_id:
+ #                   continue
 
-                # TEST Alliance ID
-                if int(allianceID) == 498125261:
-                    #it's a testie
-                    continue
-
-
-                corp_who = "http://evewho.com/api.php?type=corporation&id=" + corpID
-                print corp_who
-
+                # Placement for CCP API call for individual
 
                 unaffiliated += "<tr><td><a href=\"https://zkillboard.com/character/" + cID + "/\">" + contact + "</a></td><td>&nbsp;</tr>"
 
-
-            print contact, cID
+            if debug:
+                print contact, cID
 
 
 
