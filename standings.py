@@ -29,7 +29,7 @@ db.create_all()
 # Changeme settings
 keyID = 111111
 vCode = "fsdfdsfd"
-datasource = "C:\Users\Brandon\PycharmProjects\standings\standings.xml"
+datasource = "C:\BECAUSE\DANTE\YELLED\AT\ME\standings.xml"
 
 
 apiURL = "https://api.eveonline.com"
@@ -46,9 +46,8 @@ Text box that allows someone to paste entire listing of players in system
 User hits submit, list is iterated through and array is created to gather list of users
 call is made to http://wiki.eve-id.net/APIv2_Eve_CharacterID_XML to retrieve ID's
 Results are iterated through to build dict containing name, corp, alliance from
-http://evewho.com/api.php?type=character&id=1633218082
-http://evewho.com/api.php?type=corporation&id=869043665
-http://evewho.com/api.php?type=alliance&id=99001433
+http://wiki.eve-id.net/APIv2_Eve_CharacterInfo_XML
+
 
 Faer Kado
 GunfighterAK47
