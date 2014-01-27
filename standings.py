@@ -41,17 +41,19 @@ class Record(db.Model):
 db.create_all()
 
 # Read in configuration settings
-Config.read("C:\path\to\settings.ini")
-print Config.sections()
+Config.read("settings.ini")
 
 keyID = ConfigSectionMap("api")['keyid']
 vCode = ConfigSectionMap("api")['vcode']
-#datasource = ConfigSectionMap("files")['datasource']
-datasource = "C:\path\to\standings.xml"
+
+#TODO Build in retrieval of this so it doesn't need to be stored first
+#Retrieve from https://api.eveonline.com/corp/ContactList.xml.aspx?keyid=xxxxxxxx&vcode=xxxxxxxxxx
+datasource = "standings.xml"
 
 corpID = ConfigSectionMap("general")['corpid']
 apiURL = ConfigSectionMap("general")['apiurl']
 debug = ConfigSectionMap("general")['debug']
+interface = ConfigSectionMap("general")['interface']
 
 root = ""
 tree = ""
@@ -63,7 +65,7 @@ call is made to http://wiki.eve-id.net/APIv2_Eve_CharacterID_XML to retrieve ID'
 Results are iterated through to build dict containing name, corp, alliance from
 http://wiki.eve-id.net/APIv2_Eve_CharacterInfo_XML
 
-
+Sample player listing
 Faer Kado
 GunfighterAK47
 Henrietta Morkeheim
@@ -240,4 +242,4 @@ if __name__ == '__main__':
     tree = ET.parse(datasource)
     root = tree.getroot()
 
-    app.run(host='192.168.1.6', debug=True)
+    app.run(host=interface, debug=True)
