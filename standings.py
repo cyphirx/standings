@@ -6,13 +6,28 @@ import urllib2
 from urllib import quote_plus
 from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
-
+import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
 
 app = Flask(__name__)
 app.secret_key = 'development key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
 db = SQLAlchemy(app)
+Config = ConfigParser.ConfigParser()
 
 class Record(db.Model):
     pid = Column(Integer, primary_key=True)
@@ -25,18 +40,18 @@ class Record(db.Model):
 
 db.create_all()
 
+# Read in configuration settings
+Config.read("C:\path\to\settings.ini")
+print Config.sections()
 
-# Changeme settings
-keyID = 111111
-vCode = "fsdfdsfd"
-datasource = "C:\BECAUSE\DANTE\YELLED\AT\ME\standings.xml"
+keyID = ConfigSectionMap("api")['keyid']
+vCode = ConfigSectionMap("api")['vcode']
+#datasource = ConfigSectionMap("files")['datasource']
+datasource = "C:\path\to\standings.xml"
 
-
-apiURL = "https://api.eveonline.com"
-
-iskhr_id = 98255477
-
-debug = True
+corpID = ConfigSectionMap("general")['corpid']
+apiURL = ConfigSectionMap("general")['apiurl']
+debug = ConfigSectionMap("general")['debug']
 
 root = ""
 tree = ""

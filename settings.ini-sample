@@ -1,0 +1,12 @@
+[api]
+keyID = 111111
+vCode = "fsdfdsfd"
+
+[files]
+#Retrieve from https://api.eveonline.com/corp/ContactList.xml.aspx?keyid=xxxxxxxx&vcode=xxxxxxxxxx
+datasource = "C:\BECAUSE\DANTE\YELLED\AT\ME\standings.xml"
+
+[general]
+corpID = 1111111
+apiURL = "https://api.eveonline.com"
+debug = True
