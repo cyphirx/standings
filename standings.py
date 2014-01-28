@@ -221,3 +221,5 @@ if __name__ == '__main__':
     tree = ET.parse(datasource)
     root = tree.getroot()
     app.run(host=interface, debug=True)
+
+# vim: set ts=4 sw=4 et :

@@ -6,3 +6,4 @@ class CheckerForm(Form):
     submit = SubmitField("Check")
 
 
+# vim: set ts=4 sw=4 et :
