@@ -1,5 +1,5 @@
 <eveapi version="2">
-  <currentTime>2014-01-26 14:35:08</currentTime>
+  <currentTime>2014-01-28 23:07:14</currentTime>
   <result>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="corporateContactList">
       <row contactID="500004" contactName="Gallente Federation" contactTypeID="30" standing="-10" />
@@ -65,6 +65,7 @@
       <row contactID="92029410" contactName="Dernarius Starariur" contactTypeID="1375" standing="10" />
       <row contactID="92109771" contactName="Bob McSimmons" contactTypeID="1383" standing="10" />
       <row contactID="92109905" contactName="MCPoptart" contactTypeID="1375" standing="10" />
+      <row contactID="92233405" contactName="Fenglorian Egivand" contactTypeID="1379" standing="10" />
       <row contactID="92252276" contactName="Viper Makbema" contactTypeID="1373" standing="10" />
       <row contactID="92275334" contactName="Foriar" contactTypeID="1383" standing="10" />
       <row contactID="92330559" contactName="Nickolas Ormand" contactTypeID="1377" standing="10" />
@@ -72,6 +73,7 @@
       <row contactID="92352212" contactName="Judicata Charante" contactTypeID="1377" standing="10" />
       <row contactID="92418936" contactName="Exa Hedron" contactTypeID="1377" standing="10" />
       <row contactID="92418985" contactName="Deca Hedron" contactTypeID="1384" standing="10" />
+      <row contactID="92450171" contactName="Its Complicated" contactTypeID="1385" standing="10" />
       <row contactID="92510142" contactName="Rastus Skir" contactTypeID="1380" standing="10" />
       <row contactID="92540604" contactName="Emilee Freeman" contactTypeID="1373" standing="10" />
       <row contactID="92560156" contactName="Inkura111" contactTypeID="1375" standing="5" />
@@ -113,6 +115,7 @@
       <row contactID="93766325" contactName="Fiska Sneth" contactTypeID="1379" standing="10" />
       <row contactID="93790964" contactName="Myles Corello" contactTypeID="1378" standing="10" />
       <row contactID="93846577" contactName="Mikael Yatolila" contactTypeID="1376" standing="10" />
+      <row contactID="93881873" contactName="Athina Grayce" contactTypeID="1374" standing="10" />
       <row contactID="93902732" contactName="Ali'ikai" contactTypeID="1375" standing="10" />
       <row contactID="93904718" contactName="Lightend Medeeva" contactTypeID="1376" standing="10" />
       <row contactID="94040268" contactName="Giraffes InTheAir" contactTypeID="1383" standing="10" />
@@ -160,9 +163,11 @@
       <row contactID="197484954" contactName="Swearte Widfarend" contactTypeID="1377" standing="10" />
       <row contactID="204198478" contactName="Marbo Lechter" contactTypeID="1378" standing="10" />
       <row contactID="236588152" contactName="Unprovoked Aggression" contactTypeID="16159" standing="-5" />
+      <row contactID="245558775" contactName="Sayonia" contactTypeID="1384" standing="10" />
       <row contactID="286235836" contactName="siorin" contactTypeID="1378" standing="5" />
       <row contactID="318698186" contactName="Re'doubt" contactTypeID="1373" standing="10" />
       <row contactID="321214347" contactName="Digital Typhon" contactTypeID="1378" standing="10" />
+      <row contactID="372637637" contactName="Ino Gortrix" contactTypeID="1380" standing="10" />
       <row contactID="384379680" contactName="Mish'on Wun'ar" contactTypeID="1383" standing="10" />
       <row contactID="386292982" contactName="Pandemic Legion" contactTypeID="16159" standing="-10" />
       <row contactID="387390773" contactName="The humbleless Crew" contactTypeID="2" standing="-10" />
@@ -217,6 +222,7 @@
       <row contactID="1071431033" contactName="Kliedar" contactTypeID="1378" standing="10" />
       <row contactID="1082709605" contactName="Gay Babby" contactTypeID="1380" standing="10" />
       <row contactID="1098417609" contactName="Pointless Endeavours" contactTypeID="2" standing="-10" />
+      <row contactID="1103827750" contactName="Asatru Nornsbjorn" contactTypeID="1378" standing="10" />
       <row contactID="1115997632" contactName="renecito" contactTypeID="1385" standing="-10" />
       <row contactID="1134134801" contactName="Alexandre Mouton" contactTypeID="1375" standing="10" />
       <row contactID="1134386085" contactName="Augur Divine" contactTypeID="1377" standing="10" />
@@ -261,5 +267,5 @@
     </rowset>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="allianceContactList" />
   </result>
-  <cachedUntil>2014-01-26 14:47:21</cachedUntil>
+  <cachedUntil>2014-01-28 23:19:43</cachedUntil>
 </eveapi>
