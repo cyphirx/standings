@@ -1,9 +1,9 @@
 [api]
 keyID = 11111111
-vCode = "xxxxxxxxxxxx"
+vCode = xxxxxxxxxxxx
 
 [general]
 corpID = 222222
-apiURL = "https://api.eveonline.com"
+apiURL = https://api.eveonline.com
 debug = True
 interface = 127.0.0.1
