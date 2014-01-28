@@ -9,6 +9,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime
 
+
 def ConfigSectionMap(section):
     dict1 = {}
     options = Config.options(section)
@@ -16,7 +17,7 @@ def ConfigSectionMap(section):
         try:
             dict1[option] = Config.get(section, option)
             if dict1[option] == -1:
-                DebugPrint("skip: %s" % option)
+                print("skip: %s" % option)
         except:
             print("exception on %s!" % option)
             dict1[option] = None
@@ -29,6 +30,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
 db = SQLAlchemy(app)
 Config = ConfigParser.ConfigParser()
 
+
 class Record(db.Model):
     pid = Column(Integer, primary_key=True)
     name = Column(Text, unique=False)
@@ -38,7 +40,6 @@ class Record(db.Model):
     allianceID = Column(Integer, unique=False)
     added = Column(DateTime, unique=False)
 
-db.create_all()
 
 # Read in configuration settings
 Config.read("settings.ini")
@@ -58,45 +59,29 @@ interface = ConfigSectionMap("general")['interface']
 root = ""
 tree = ""
 
-"""
-Text box that allows someone to paste entire listing of players in system
-User hits submit, list is iterated through and array is created to gather list of users
-call is made to http://wiki.eve-id.net/APIv2_Eve_CharacterID_XML to retrieve ID's
-Results are iterated through to build dict containing name, corp, alliance from
-http://wiki.eve-id.net/APIv2_Eve_CharacterInfo_XML
+db.create_all()
 
-Sample player listing
-Faer Kado
-GunfighterAK47
-Henrietta Morkeheim
-Johnny Hammersticks
-Kelenia Taranogas
-Kliedar
-Luffy999
-Malkador Sigillit
-Oolon Rockefeller
-Rowan Crendraven
-Unit 1138
-Weli Gaterau
-Yornum Haree
-ZavoDiK
+# Complete all base settings
 
-"""
 
-def checkCache():
+# API Call to retrieve consolidated API call listing for cid,
+# followup call to hit http://wiki.eve-id.net/APIv2_Eve_CharacterInfo_XML
+# to retrieve corp/alliance
 
-    # Let's check if cache is older than timelimit
+
+def check_cache():
+    # Let's check if cache is older than time limit
     cached = tree.find('./cachedUntil')
 
-    cachedTstamp = datetime.strptime(cached.text, "%Y-%m-%d %H:%M:%S")
+    cached_timestamp = datetime.strptime(cached.text, "%Y-%m-%d %H:%M:%S")
 
-    if (cachedTstamp < datetime.utcnow()):
+    if cached_timestamp < datetime.utcnow():
         return False
     else:
         return True
-    return False
 
-def checkFriendlies(name):
+
+def check_friendlies(name):
     if debug:
         print "Checking " + name
 
@@ -111,12 +96,14 @@ def checkFriendlies(name):
                 return False
     return False
 
-def getContacts():
+
+def get_contacts():
+    global tree
     url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
-    request = urllib2.Request(url, headers={"Accept" : "application/xml"})
+    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
 
     try:
-        f = urllib2.urlopen(request)
+        f = urllib2.urlopen(url_request)
     except:
         return "Error opening url"
 
@@ -124,7 +111,6 @@ def getContacts():
     tree.write(datasource)
     print "Retrieved tree and updated"
 
-    return tree
 
 @app.route('/check', methods=['GET', 'POST'])
 def check():
@@ -132,32 +118,32 @@ def check():
     if request.method == 'POST':
         block = form.players.data.split('\r\n')
         unaffiliated = ""
-        pname = ""
+        player_name = ""
         players = []
 
         # Start Iterating through players and compare against friendlies list, add to list to query CCP API
-        for player in block[:]:
-            if player == "":
+        for value in block[:]:
+            if value == "":
                 continue
-            # stub here for a checkbox later to list everyone in system, including friendlies with colorcode
-            if checkFriendlies(player):
+                # stub here for a checkbox later to list everyone in system, including friendlies with colorcode
+            if check_friendlies(value):
                 continue
 
             # Rough and dirty listing
-            players.append(player)
+            players.append(value)
             # unaffiliated += "<tr><td>" + player + "</td></tr>"
 
             # Build comma-separated list of names to retrieve from CCP API
-            pname += player + ","
+            player_name += value + ","
 
         # Build URL and retrieve from API
-        url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(pname, ",")
+        url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
         if debug:
             print url
 
-        requestAPI = urllib2.Request(url, headers={"Accept" : "application/xml"})
+        request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
-            f = urllib2.urlopen(requestAPI)
+            f = urllib2.urlopen(request_api)
         except:
             return "Error opening url"
 
@@ -167,33 +153,29 @@ def check():
         # Iterate through ID's and names to start forming next API call
         for child in uid_root.findall('./result/rowset/[@name="characters"]/*'):
             contact = child.get('name')
-            cID = child.get('characterID')
-            if int(cID) == 0:
-                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
+            child_id = child.get('characterID')
+            if int(child_id) == 0:
+                unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
-                # Check if ISKHR corpid(98255477) is same as players
- #               if int(corpID) == iskhr_id:
- #                   continue
+            # Check if ISKHR corpid(98255477) is same as players
+            #               if int(corpID) == iskhr_id:
+            #                   continue
 
                 # Placement for CCP API call for individual
 
-                unaffiliated += "<tr><td><a href=\"https://zkillboard.com/character/" + cID + "/\">" + contact + "</a></td><td>&nbsp;</tr>"
+                unaffiliated += "<tr><td><a href=\"https://zkillboard.com/character/" + child_id + "/\">" + contact \
+                                + "</a></td><td>&nbsp;</tr>"
 
             if debug:
-                print contact, cID
-
-
+                print contact, child_id
 
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
 
-
-        return render_template('check.html', data = Markup(unaffiliated), form=form, success=True)
-
+        return render_template('check.html', data=Markup(unaffiliated), form=form, success=True)
 
     if request.method == 'GET':
         print "page get"
-
 
     return render_template('check.html', form=form)
 
@@ -206,8 +188,8 @@ def home():
 
     cached = tree.find('./cachedUntil')
 
-    if (checkCache() == False):
-        getContacts()
+    if not check_cache():
+        get_contacts()
         tree = ET.parse(datasource)
         print("Reloaded xml")
         root = tree.getroot()
@@ -222,12 +204,12 @@ def home():
         lists.update({contact: standing})
 
     contents = ""
-    for key, value in sorted(lists.iteritems(), key=lambda (k,v): (v,k)):
+    for key, value in sorted(lists.iteritems(), key=lambda (k, v): (v, k)):
         if value <= -10:
             bgcolor = "terrible"
         elif value < 0:
             bgcolor = "bad"
-        elif value >= 5 and value < 10:
+        elif 5 <= value < 10:
             bgcolor = "good"
         elif value >= 10:
             bgcolor = "excellent"
@@ -235,11 +217,8 @@ def home():
             bgcolor = "neutral"
         contents += "<tr id='%s'><td> %s </td><td> %s </td></tr>\n" % (bgcolor, key, str(value))
 
-    return render_template("index.html",contacts=Markup(contents),cached=cached.text)
+    return render_template("index.html", contacts=Markup(contents), cached=cached.text)
 
 
 if __name__ == '__main__':
-    tree = ET.parse(datasource)
-    root = tree.getroot()
-
     app.run(host=interface, debug=True)
