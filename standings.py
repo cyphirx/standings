@@ -9,7 +9,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime
 
-
 def ConfigSectionMap(section):
     dict1 = {}
     options = Config.options(section)
@@ -72,9 +71,7 @@ db.create_all()
 def check_cache():
     # Let's check if cache is older than time limit
     cached = tree.find('./cachedUntil')
-
-    cached_timestamp = datetime.strptime(cached.text, "%Y-%m-%d %H:%M:%S")
-
+    cached_timestamp = datetime.strptime(str(cached.text), "%Y-%m-%d %H:%M:%S")
     if cached_timestamp < datetime.utcnow():
         return False
     else:
@@ -221,4 +218,6 @@ def home():
 
 
 if __name__ == '__main__':
+    tree = ET.parse(datasource)
+    root = tree.getroot()
     app.run(host=interface, debug=True)
