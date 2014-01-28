@@ -96,7 +96,7 @@ def check_friendlies(name):
 
 def get_contacts():
     global tree
-    url = apiURL.strip('"') + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode.strip('"')
+    url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
     url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
     print url
     try:
@@ -134,7 +134,7 @@ def check():
             player_name += value + ","
 
         # Build URL and retrieve from API
-        url = apiURL.strip('"') + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
+        url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
         if debug:
             print url
 
