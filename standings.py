@@ -79,10 +79,20 @@ def check_cache():
         return True
 
 
-def check_friendlies(name):
-    if debug:
-        print "Checking " + name
+def standings_bgcolor(value):
+    if value <= -10:
+        bgcolor = "terrible"
+    elif value < 0:
+        bgcolor = "bad"
+    elif 5 <= value < 10:
+        bgcolor = "good"
+    elif value >= 10:
+        bgcolor = "excellent"
+    else:
+        bgcolor = "neutral"
+    return bgcolor
 
+def check_friendlies(name):
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         contact = child.get('contactName')
         standing = int(child.get('standing'))
@@ -169,6 +179,7 @@ def check():
         try:
             f = urllib2.urlopen(request_api)
         except:
+            print url
             return "Error opening url"
 
         uid_tree = ET.parse(f)
@@ -185,22 +196,25 @@ def check():
                 if returned_player['corp_id'] == "98255477":
                     continue
 
+                bgcolor = "neutral"
                 # Base entry for standings check, needs to be tweaked to properly skip folks, readme updated with test check
                 for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
                     standings_corp = child.get('contactName')
                     standings = int(child.get('standing'))
-                    if (standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']) and standings >= 5:
-                        continue
+                    if standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']:
+                        bgcolor = standings_bgcolor(standings)
+
 
 
                 #TODO Check current list of standings and compare alliance/corp to mark friendlies
-                unaffiliated += "<tr>" \
-                                + "<td><a href=\"https://zkillboard.com/character/" + child_id + "/\" target=\"_blank\">" + contact \
-                                + "</a></td>" \
+                unaffiliated += "<tr id=" + bgcolor + ">" \
+                                + "<td>" + contact + '</td>' \
                                 + "<td>" + returned_player['corporation'] + "</td>" \
                                 + "<td>" + returned_player['alliance'] + "</td>" \
-                                + '<td><a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ", "+") \
-                                + '" target=\"_blank\">EveWho</a></td></td>'
+                                + '<td><a href=\"https://zkillboard.com/character/' + child_id + '/\" target=\"_blank\">' \
+                                + '<img src="/static/img/zkillboard.ico" width="16" height="16"> </a>' \
+                                + '<a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ", "+") \
+                                + '" target=\"_blank\"><img src="/static/img/evewho.ico" width="16" height="16"></a></td></td>'
 
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
@@ -238,16 +252,7 @@ def home():
 
     contents = ""
     for key, value in sorted(lists.iteritems(), key=lambda (k, v): (v, k)):
-        if value <= -10:
-            bgcolor = "terrible"
-        elif value < 0:
-            bgcolor = "bad"
-        elif 5 <= value < 10:
-            bgcolor = "good"
-        elif value >= 10:
-            bgcolor = "excellent"
-        else:
-            bgcolor = "neutral"
+        bgcolor = standings_bgcolor(value)
         contents += "<tr id='%s'><td> %s </td><td> %s </td></tr>\n" % (bgcolor, key, str(value))
 
     return render_template("index.html", contacts=Markup(contents), cached=cached.text)
