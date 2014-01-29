@@ -1,3 +1,4 @@
+from pprint import pprint
 from flask import Flask, render_template, Markup, request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -98,7 +99,6 @@ def get_contacts():
     global tree
     url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
     url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
-    print url
     try:
         f = urllib2.urlopen(url_request)
     except:
@@ -107,6 +107,35 @@ def get_contacts():
     tree = ET.parse(f)
     tree.write(datasource)
     print "Retrieved tree and updated"
+
+
+def lookup_player_id(child_id):
+    url = apiURL + "/eve/CharacterInfo.xml.aspx?characterID=" + str(child_id)
+    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
+    try:
+        f = urllib2.urlopen(url_request)
+    except:
+        return "Error opening url"
+    lookup_tree = ET.parse(f)
+    lookup_root = lookup_tree.getroot()
+
+    alliance_id = "0"
+    alliance = ""
+
+    result = lookup_root.findall('./result/*')
+    for child in result:
+        if child.tag == "corporation":
+            corporation = child.text
+        if child.tag == "corporationID":
+            corp_id = child.text
+        if child.tag == "allianceID":
+            alliance_id = child.text
+        if child.tag == "alliance":
+            alliance = child.text
+        if child.tag == "characterName":
+            characterName = child.text
+
+    return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance, "characterName": characterName }
 
 
 @app.route('/check', methods=['GET', 'POST'])
@@ -135,8 +164,6 @@ def check():
 
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
-        if debug:
-            print url
 
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
@@ -154,17 +181,26 @@ def check():
             if int(child_id) == 0:
                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
-            # Check if ISKHR corpid(98255477) is same as players
-            #               if int(corpID) == iskhr_id:
-            #                   continue
+                returned_player = lookup_player_id(child_id)
+                if returned_player['corp_id'] == "98255477":
+                    continue
 
-                # Placement for CCP API call for individual
+                # Base entry for standings check, needs to be tweaked to properly skip folks, readme updated with test check
+                for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
+                    standings_corp = child.get('contactName')
+                    standings = int(child.get('standing'))
+                    if (standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']) and standings >= 5:
+                        continue
 
-                unaffiliated += "<tr><td><a href=\"https://zkillboard.com/character/" + child_id + "/\">" + contact \
-                                + "</a></td><td>&nbsp;</tr>"
 
-            if debug:
-                print contact, child_id
+                #TODO Check current list of standings and compare alliance/corp to mark friendlies
+                unaffiliated += "<tr>" \
+                                + "<td><a href=\"https://zkillboard.com/character/" + child_id + "/\" target=\"_blank\">" + contact \
+                                + "</a></td>" \
+                                + "<td>" + returned_player['corporation'] + "</td>" \
+                                + "<td>" + returned_player['alliance'] + "</td>" \
+                                + '<td><a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ", "+") \
+                                + '" target=\"_blank\">EveWho</a></td></td>'
 
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
