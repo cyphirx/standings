@@ -9,6 +9,8 @@ from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime
+from functions import GMT
+
 
 def ConfigSectionMap(section):
     dict1 = {}
@@ -79,6 +81,7 @@ def check_cache():
         return True
 
 
+#TODO verify standings values are as listed below.
 def standings_bgcolor(value):
     if value <= -10:
         bgcolor = "terrible"
@@ -91,6 +94,7 @@ def standings_bgcolor(value):
     else:
         bgcolor = "neutral"
     return bgcolor
+
 
 def check_friendlies(name):
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
@@ -144,7 +148,16 @@ def lookup_player_id(child_id):
             alliance = child.text
         if child.tag == "characterName":
             characterName = child.text
-
+#    pid = Column(Integer, primary_key=True)
+#    name = Column(Text, unique=False)
+#    corp = Column(Text, unique=False)
+#    corpID = Column(Integer, unique=False)
+#    alliance = Column(Text, unique=False)
+#    allianceID = Column(Integer, unique=False)
+#    added = Column(DateTime, unique=False)
+    u = Record(pid=child_id, name = characterName, corp = corporation, corpID = corp_id, alliance = alliance,  allianceID = alliance_id, added = datetime.now(tz=GMT()))
+    db.session.add(u)
+    db.session.commit()
     return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance, "characterName": characterName }
 
 
@@ -157,12 +170,9 @@ def check():
         player_name = ""
         players = []
 
-        # Start Iterating through players and compare against friendlies list, add to list to query CCP API
+        # Retrieve every playerid in system and compare to what we have locally
         for value in block[:]:
             if value == "":
-                continue
-                # stub here for a checkbox later to list everyone in system, including friendlies with colorcode
-            if check_friendlies(value):
                 continue
 
             # Rough and dirty listing
@@ -205,8 +215,7 @@ def check():
                         bgcolor = standings_bgcolor(standings)
 
 
-
-                #TODO Check current list of standings and compare alliance/corp to mark friendlies
+                #TODO create player page that will display cached data, if none available, retrieve info for that person
                 unaffiliated += "<tr id=" + bgcolor + ">" \
                                 + "<td>" + contact + '</td>' \
                                 + "<td>" + returned_player['corporation'] + "</td>" \
@@ -221,8 +230,6 @@ def check():
 
         return render_template('check.html', data=Markup(unaffiliated), form=form, success=True)
 
-    if request.method == 'GET':
-        print "page get"
 
     return render_template('check.html', form=form)
 
