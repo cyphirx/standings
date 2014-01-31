@@ -2,14 +2,16 @@ from pprint import pprint
 from flask import Flask, render_template, Markup, request
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import urllib2
 from urllib import quote_plus
 from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
-from sqlalchemy import Column, Integer, Text, DateTime
+from sqlalchemy import Column, Integer, Text, DateTime, exists
 from functions import GMT
+import pytz
+
 
 
 def ConfigSectionMap(section):
@@ -124,40 +126,62 @@ def get_contacts():
 
 
 def lookup_player_id(child_id):
-    url = apiURL + "/eve/CharacterInfo.xml.aspx?characterID=" + str(child_id)
-    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
-    try:
-        f = urllib2.urlopen(url_request)
-    except:
-        return "Error opening url"
-    lookup_tree = ET.parse(f)
-    lookup_root = lookup_tree.getroot()
+    expire_records = date.today()-timedelta(days=5)
 
-    alliance_id = "0"
-    alliance = ""
+    player_exists =  db.session.query(exists().where(Record.pid == child_id)).scalar()
 
-    result = lookup_root.findall('./result/*')
-    for child in result:
-        if child.tag == "corporation":
-            corporation = child.text
-        if child.tag == "corporationID":
-            corp_id = child.text
-        if child.tag == "allianceID":
-            alliance_id = child.text
-        if child.tag == "alliance":
-            alliance = child.text
-        if child.tag == "characterName":
-            characterName = child.text
-#    pid = Column(Integer, primary_key=True)
-#    name = Column(Text, unique=False)
-#    corp = Column(Text, unique=False)
-#    corpID = Column(Integer, unique=False)
-#    alliance = Column(Text, unique=False)
-#    allianceID = Column(Integer, unique=False)
-#    added = Column(DateTime, unique=False)
-    u = Record(pid=child_id, name = characterName, corp = corporation, corpID = corp_id, alliance = alliance,  allianceID = alliance_id, added = datetime.now(tz=GMT()))
-    db.session.add(u)
-    db.session.commit()
+    if player_exists:
+        player = Record.query.filter_by(pid = child_id).first()
+
+        if player.added.date() < expire_records:
+            db.session.delete(player)
+            db.session.commit()
+            player_exists = False
+
+    if not player_exists:
+        print "adding id " + child_id
+        url = apiURL + "/eve/CharacterInfo.xml.aspx?characterID=" + str(child_id)
+        url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
+        try:
+            f = urllib2.urlopen(url_request)
+        except:
+            return "Error opening url"
+        lookup_tree = ET.parse(f)
+        lookup_root = lookup_tree.getroot()
+
+        alliance_id = "0"
+        alliance = ""
+
+        result = lookup_root.findall('./result/*')
+        for child in result:
+            if child.tag == "corporation":
+                corporation = child.text
+            if child.tag == "corporationID":
+                corp_id = child.text
+            if child.tag == "allianceID":
+                alliance_id = child.text
+            if child.tag == "alliance":
+                alliance = child.text
+            if child.tag == "characterName":
+                characterName = child.text
+    #    pid = Column(Integer, primary_key=True)
+    #    name = Column(Text, unique=False)
+    #    corp = Column(Text, unique=False)
+    #    corpID = Column(Integer, unique=False)
+    #    alliance = Column(Text, unique=False)
+    #    allianceID = Column(Integer, unique=False)
+    #    added = Column(DateTime, unique=False)
+        u = Record(pid=child_id, name = characterName, corp = corporation, corpID = corp_id, alliance = alliance,  allianceID = alliance_id, added = datetime.now(tz=GMT()))
+        db.session.add(u)
+        db.session.commit()
+
+    else:
+        corporation = player.corp
+        corp_id = player.corpID
+        alliance = player.alliance
+        alliance_id = player.allianceID
+        characterName = player.name
+
     return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance, "characterName": characterName }
 
 

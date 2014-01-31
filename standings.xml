@@ -1,5 +1,5 @@
 <eveapi version="2">
-  <currentTime>2014-01-29 16:59:49</currentTime>
+  <currentTime>2014-01-31 03:24:23</currentTime>
   <result>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="corporateContactList">
       <row contactID="500004" contactName="Gallente Federation" contactTypeID="30" standing="-10" />
@@ -119,6 +119,7 @@
       <row contactID="93881873" contactName="Athina Grayce" contactTypeID="1374" standing="10" />
       <row contactID="93902732" contactName="Ali'ikai" contactTypeID="1375" standing="10" />
       <row contactID="93904718" contactName="Lightend Medeeva" contactTypeID="1376" standing="10" />
+      <row contactID="93981690" contactName="Kirsten Eir" contactTypeID="1383" standing="10" />
       <row contactID="94040268" contactName="Giraffes InTheAir" contactTypeID="1383" standing="10" />
       <row contactID="94139375" contactName="Lightoh Medeeva" contactTypeID="1376" standing="10" />
       <row contactID="94212196" contactName="Zachary Tissant" contactTypeID="1384" standing="10" />
@@ -265,8 +266,9 @@
       <row contactID="1921820502" contactName="silmarilla" contactTypeID="1378" standing="5" />
       <row contactID="1928602565" contactName="Oode22" contactTypeID="1375" standing="10" />
       <row contactID="1975792902" contactName="Zervonn" contactTypeID="1377" standing="10" />
+      <row contactID="2088880549" contactName="Zaran Coltraine" contactTypeID="1377" standing="10" />
     </rowset>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="allianceContactList" />
   </result>
-  <cachedUntil>2014-01-29 17:14:49</cachedUntil>
+  <cachedUntil>2014-01-31 03:39:23</cachedUntil>
 </eveapi>
