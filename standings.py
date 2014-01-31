@@ -10,7 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime, exists
 from functions import GMT
-import pytz
 
 
 
@@ -164,13 +163,7 @@ def lookup_player_id(child_id):
                 alliance = child.text
             if child.tag == "characterName":
                 characterName = child.text
-    #    pid = Column(Integer, primary_key=True)
-    #    name = Column(Text, unique=False)
-    #    corp = Column(Text, unique=False)
-    #    corpID = Column(Integer, unique=False)
-    #    alliance = Column(Text, unique=False)
-    #    allianceID = Column(Integer, unique=False)
-    #    added = Column(DateTime, unique=False)
+
         u = Record(pid=child_id, name = characterName, corp = corporation, corpID = corp_id, alliance = alliance,  allianceID = alliance_id, added = datetime.now(tz=GMT()))
         db.session.add(u)
         db.session.commit()
@@ -183,6 +176,16 @@ def lookup_player_id(child_id):
         characterName = player.name
 
     return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance, "characterName": characterName }
+
+#TODO: Increase usefulness of this, maybe a way to manually update or add notes on individuals, up in the air right now
+@app.route('/player/<name>')
+def display_player(name):
+    player = Record.query.filter_by(name = name).first_or_404()
+    if player == None:
+        flash('Player ' + name + ' not found!.')
+        return redirect(url_for('index'))
+
+    return render_template('player.html', player = player)
 
 
 @app.route('/check', methods=['GET', 'POST'])
