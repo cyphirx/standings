@@ -1,5 +1,5 @@
 <eveapi version="2">
-  <currentTime>2014-01-31 03:24:23</currentTime>
+  <currentTime>2014-02-01 05:24:40</currentTime>
   <result>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="corporateContactList">
       <row contactID="500004" contactName="Gallente Federation" contactTypeID="30" standing="-10" />
@@ -270,5 +270,5 @@
     </rowset>
     <rowset columns="contactID,contactName,standing,contactTypeID" key="contactID" name="allianceContactList" />
   </result>
-  <cachedUntil>2014-01-31 03:39:23</cachedUntil>
+  <cachedUntil>2014-02-01 05:39:40</cachedUntil>
 </eveapi>
