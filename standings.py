@@ -65,6 +65,7 @@ interface = ConfigSectionMap("general")['interface']
 
 root = ""
 tree = ""
+contacts_cached = ""
 
 db.create_all()
 
@@ -100,31 +101,32 @@ def standings_bgcolor(value):
     return bgcolor
 
 
-def check_friendlies(name):
-    for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
-        contact = child.get('contactName')
-        standing = int(child.get('standing'))
-
-        if contact == name:
-            if standing > 0:
-                return True
-            else:
-                return False
-    return False
-
-
 def get_contacts():
-    global tree
+    global tree, root
+    global contacts_cached
     url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
-    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
-    try:
-        f = urllib2.urlopen(url_request)
-    except:
-        return "Error opening url"
+    # Commenting out to reduce chances of pegging ccp servers
+#    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
+#    try:
+#        f = urllib2.urlopen(url_request)
+#    except:
+#        return "Error openingurl"
+    #tree= ET.parse(f)
+    tree = ET.parse(datasource)
+    root = tree.getroot()
+    Standing.query.delete()
+    db.session.commit()
 
-    tree = ET.parse(f)
-    tree.write(datasource)
+    contacts_cached = datetime.now(tz=GMT())
+
+    for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
+        standings_corp = child.get('contactName')
+        standings = int(child.get('standing'))
+        s = Standing(name=standings_corp, value=standings, added=contacts_cached)
+        db.session.add(s)
+        db.session.commit()
     print "Retrieved tree and updated"
+
 
 
 def lookup_player_id(child_id):
@@ -204,23 +206,18 @@ def check():
         for value in block[:]:
             if value == "":
                 continue
-
-            # Rough and dirty listing
             players.append(value)
-            # unaffiliated += "<tr><td>" + player + "</td></tr>"
-
             # Build comma-separated list of names to retrieve from CCP API
             player_name += value + ","
 
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
-
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
             f = urllib2.urlopen(request_api)
         except:
             print url
-            return "Error opening url"
+            return "Error retrieving character ids url"
 
         uid_tree = ET.parse(f)
         uid_root = uid_tree.getroot()
@@ -246,14 +243,14 @@ def check():
 
 
                 #TODO create player page that will display cached data, if none available, retrieve info for that person
-                unaffiliated += "<tr id=" + bgcolor + ">" \
+                unaffiliated += "<tr id=" + bgcolor + ">\n" \
                                 + "<td>" + contact + '</td>' \
                                 + "<td>" + returned_player['corporation'] + "</td>" \
                                 + "<td>" + returned_player['alliance'] + "</td>" \
                                 + '<td><a href=\"https://zkillboard.com/character/' + child_id + '/\" target=\"_blank\">' \
                                 + '<img src="/static/img/zkillboard.ico" width="16" height="16"> </a>' \
                                 + '<a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ", "+") \
-                                + '" target=\"_blank\"><img src="/static/img/evewho.ico" width="16" height="16"></a></td></td>'
+                                + '" target=\"_blank\"><img src="/static/img/evewho.ico" width="16" height="16"></a></td></td>\n'
 
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
@@ -296,6 +293,7 @@ def home():
 
 
 if __name__ == '__main__':
+    get_contacts()
     tree = ET.parse(datasource)
     root = tree.getroot()
     app.run(host=interface, debug=True)
