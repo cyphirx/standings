@@ -8,9 +8,8 @@ from urllib import quote_plus
 from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
-from sqlalchemy import Column, Integer, Text, DateTime, exists
-from functions import GMT
-
+from sqlalchemy import Column, Integer, Text, DateTime, exists, or_
+from functions import GMT, standings_bgcolor
 
 
 def ConfigSectionMap(section):
@@ -43,6 +42,7 @@ class Record(db.Model):
     allianceID = Column(Integer, unique=False)
     added = Column(DateTime, unique=False)
 
+
 class Standing(db.Model):
     name = Column(Text, primary_key=True)
     value = Column(Integer, unique=False)
@@ -53,10 +53,6 @@ Config.read("settings.ini")
 
 keyID = ConfigSectionMap("api")['keyid']
 vCode = ConfigSectionMap("api")['vcode']
-
-#TODO Build in retrieval of this so it doesn't need to be stored first
-#Retrieve from https://api.eveonline.com/corp/ContactList.xml.aspx?keyid=xxxxxxxx&vcode=xxxxxxxxxx
-datasource = "standings.xml"
 
 corpID = ConfigSectionMap("general")['corpid']
 apiURL = ConfigSectionMap("general")['apiurl']
@@ -69,50 +65,25 @@ contacts_cached = ""
 
 db.create_all()
 
-# Complete all base settings
-
-
-# API Call to retrieve consolidated API call listing for cid,
-# followup call to hit http://wiki.eve-id.net/APIv2_Eve_CharacterInfo_XML
-# to retrieve corp/alliance
-
-
-def check_cache():
-    # Let's check if cache is older than time limit
-    cached = tree.find('./cachedUntil')
-    cached_timestamp = datetime.strptime(str(cached.text), "%Y-%m-%d %H:%M:%S")
-    if cached_timestamp < datetime.utcnow():
-        return False
-    else:
-        return True
-
-
-def standings_bgcolor(value):
-    if value < -5:
-        bgcolor = "terrible"
-    elif -5 <= value < 0:
-        bgcolor = "bad"
-    elif 0 < value <= 5:
-        bgcolor = "good"
-    elif value > 5:
-        bgcolor = "excellent"
-    else:
-        bgcolor = "neutral"
-    return bgcolor
-
+# All global pieces set, let's build some code
 
 def get_contacts():
     global tree, root
     global contacts_cached
+
+    if contacts_cached != "":
+        time_var = datetime.now(tz=GMT()) - timedelta(hour=1)
+        if time_var < contacts_cached:
+            print time_var, contacts_cached
+            return
+
     url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
-    # Commenting out to reduce chances of pegging ccp servers
-#    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
-#    try:
-#        f = urllib2.urlopen(url_request)
-#    except:
-#        return "Error openingurl"
-    #tree= ET.parse(f)
-    tree = ET.parse(datasource)
+    url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
+    try:
+        f = urllib2.urlopen(url_request)
+    except:
+        return "Error opening contact list retrieval URL"
+    tree = ET.parse(f)
     root = tree.getroot()
     Standing.query.delete()
     db.session.commit()
@@ -122,20 +93,22 @@ def get_contacts():
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         standings_corp = child.get('contactName')
         standings = int(child.get('standing'))
+        # Take out TEST addition to standings
+        if standings_corp == "Test Alliance Please Ignore":
+            continue
         s = Standing(name=standings_corp, value=standings, added=contacts_cached)
         db.session.add(s)
         db.session.commit()
     print "Retrieved tree and updated"
 
 
-
 def lookup_player_id(child_id):
-    expire_records = date.today()-timedelta(days=5)
+    expire_records = date.today() - timedelta(days=5)
 
-    player_exists =  db.session.query(exists().where(Record.pid == child_id)).scalar()
+    player_exists = db.session.query(exists().where(Record.pid == child_id)).scalar()
 
     if player_exists:
-        player = Record.query.filter_by(pid = child_id).first()
+        player = Record.query.filter_by(pid=child_id).first()
 
         if player.added.date() < expire_records:
             db.session.delete(player)
@@ -169,7 +142,8 @@ def lookup_player_id(child_id):
             if child.tag == "characterName":
                 characterName = child.text
 
-        u = Record(pid=child_id, name=characterName, corp=corporation, corpID=corp_id, alliance=alliance,  allianceID=alliance_id, added=datetime.now(tz=GMT()))
+        u = Record(pid=child_id, name=characterName, corp=corporation, corpID=corp_id, alliance=alliance,
+                   allianceID=alliance_id, added=datetime.now(tz=GMT()))
         db.session.add(u)
         db.session.commit()
 
@@ -180,22 +154,24 @@ def lookup_player_id(child_id):
         alliance_id = player.allianceID
         characterName = player.name
 
-    return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance, "characterName": characterName }
+    return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance,
+            "characterName": characterName}
 
 #TODO: Increase usefulness of this, maybe a way to manually update or add notes on individuals, up in the air right now
 @app.route('/player/<name>')
 def display_player(name):
-    player = Record.query.filter_by(name = name).first_or_404()
-    if player == None:
+    player = Record.query.filter_by(name=name).first_or_404()
+    if player is None:
         flash('Player ' + name + ' not found!.')
         return redirect(url_for('index'))
 
-    return render_template('player.html', player = player)
+    return render_template('player.html', player=player)
 
 
 @app.route('/check', methods=['GET', 'POST'])
 def check():
     form = CheckerForm()
+    get_contacts()
     if request.method == 'POST':
         block = form.players.data.split('\r\n')
         unaffiliated = ""
@@ -209,7 +185,7 @@ def check():
             players.append(value)
             # Build comma-separated list of names to retrieve from CCP API
             player_name += value + ","
-        #TODO Redo this to remove check if no one hasn't already been added to records table
+            #TODO Redo this to remove check if no one hasn't already been added to records table
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
@@ -223,6 +199,7 @@ def check():
         uid_root = uid_tree.getroot()
 
         # Iterate through ID's and names to start forming next API call
+
         for child in uid_root.findall('./result/rowset/[@name="characters"]/*'):
             contact = child.get('name')
             child_id = child.get('characterID')
@@ -230,37 +207,31 @@ def check():
                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
                 returned_player = lookup_player_id(child_id)
+                u = db.session.query(Standing).filter(or_(Standing.name == returned_player['characterName'],
+                                                          Standing.name == returned_player['corporation'],
+                                                          Standing.name == returned_player['alliance'])).first()
+                if u:
+                    bgcolor = standings_bgcolor(u.value)
+                else:
+                    bgcolor = "neutral"
+                if returned_player['corp_id'] == 98255477:
+                    bgcolor = "excellent"
 
-                bgcolor = "neutral"
-                #TODO Check needs to be redone for DB and skip parsing
-                # Base entry for standings check, needs to be tweaked to properly skip folks, readme updated with test check
-                for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
-                    standings_corp = child.get('contactName')
-                    standings = int(child.get('standing'))
-                    if standings_corp == "Test Alliance Please Ignore":
-                        continue
-                    if returned_player['characterName'] == standings_corp or standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']:
-                        bgcolor = standings_bgcolor(standings)
-                        break
-                    # ISKHR member, automatically set to blue
-                    if returned_player['corp_id'] == 98255477:
-                        bgcolor = "excellent"
-
-                #TODO create player page that will display cached data, if none available, retrieve info for that person
+                #TODO Link in player page to here
                 unaffiliated += "<tr id=" + bgcolor + ">\n" \
                                 + "<td>" + contact + '</td>' \
                                 + "<td>" + returned_player['corporation'] + "</td>" \
                                 + "<td>" + returned_player['alliance'] + "</td>" \
                                 + '<td><a href=\"https://zkillboard.com/character/' + child_id + '/\" target=\"_blank\">' \
                                 + '<img src="/static/img/zkillboard.ico" width="16" height="16"> </a>' \
-                                + '<a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ", "+") \
+                                + '<a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ",
+                                                                                                                 "+") \
                                 + '" target=\"_blank\"><img src="/static/img/evewho.ico" width="16" height="16"></a></td></td>\n'
 
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
 
         return render_template('check.html', data=Markup(unaffiliated), form=form, success=True)
-
 
     return render_template('check.html', form=form)
 
@@ -271,18 +242,9 @@ def home():
 
     lists = OrderedDict({})
 
-    cached = tree.find('./cachedUntil')
+    get_contacts()
 
-    if not check_cache():
-        get_contacts()
-        tree = ET.parse(datasource)
-        print("Reloaded xml")
-        root = tree.getroot()
-        cached = tree.find('./cachedUntil')
-
-    else:
-        print "Cache has been updated recently"
-
+    #TODO Redo this to use db instead
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         contact = child.get('contactName')
         standing = int(child.get('standing'))
@@ -293,13 +255,11 @@ def home():
         bgcolor = standings_bgcolor(value)
         contents += "<tr id='%s'><td> %s </td><td> %s </td></tr>\n" % (bgcolor, key, str(value))
 
-    return render_template("index.html", contacts=Markup(contents), cached=cached.text)
+    return render_template("index.html", contacts=Markup(contents), cached=contacts_cached)
 
 
 if __name__ == '__main__':
     get_contacts()
-    tree = ET.parse(datasource)
-    root = tree.getroot()
     app.run(host=interface, debug=True)
 
 # vim: set ts=4 sw=4 et :
