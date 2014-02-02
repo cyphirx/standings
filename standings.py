@@ -43,6 +43,10 @@ class Record(db.Model):
     allianceID = Column(Integer, unique=False)
     added = Column(DateTime, unique=False)
 
+class Standing(db.Model):
+    name = Column(Text, primary_key=True)
+    value = Column(Integer, unique=False)
+    added = Column(DateTime, unique=False)
 
 # Read in configuration settings
 Config.read("settings.ini")
@@ -82,15 +86,14 @@ def check_cache():
         return True
 
 
-#TODO verify standings values are as listed below.
 def standings_bgcolor(value):
-    if value <= -10:
+    if value < -5:
         bgcolor = "terrible"
-    elif value < 0:
+    elif -5 <= value < 0:
         bgcolor = "bad"
-    elif 5 <= value < 10:
+    elif 0 < value <= 5:
         bgcolor = "good"
-    elif value >= 10:
+    elif value > 5:
         bgcolor = "excellent"
     else:
         bgcolor = "neutral"
