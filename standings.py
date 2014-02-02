@@ -242,6 +242,7 @@ def check():
                     if returned_player['characterName'] == standings_corp or standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']:
                         bgcolor = standings_bgcolor(standings)
                         break
+                    # ISKHR member, automatically set to blue
                     if returned_player['corp_id'] == 98255477:
                         bgcolor = "excellent"
 
