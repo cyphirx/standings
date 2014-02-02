@@ -169,7 +169,7 @@ def lookup_player_id(child_id):
             if child.tag == "characterName":
                 characterName = child.text
 
-        u = Record(pid=child_id, name = characterName, corp = corporation, corpID = corp_id, alliance = alliance,  allianceID = alliance_id, added = datetime.now(tz=GMT()))
+        u = Record(pid=child_id, name=characterName, corp=corporation, corpID=corp_id, alliance=alliance,  allianceID=alliance_id, added=datetime.now(tz=GMT()))
         db.session.add(u)
         db.session.commit()
 
@@ -209,7 +209,7 @@ def check():
             players.append(value)
             # Build comma-separated list of names to retrieve from CCP API
             player_name += value + ","
-
+        #TODO Redo this to remove check if no one hasn't already been added to records table
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
@@ -230,17 +230,20 @@ def check():
                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
                 returned_player = lookup_player_id(child_id)
-                if returned_player['corp_id'] == "98255477":
-                    continue
 
                 bgcolor = "neutral"
+                #TODO Check needs to be redone for DB and skip parsing
                 # Base entry for standings check, needs to be tweaked to properly skip folks, readme updated with test check
                 for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
                     standings_corp = child.get('contactName')
                     standings = int(child.get('standing'))
-                    if standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']:
+                    if standings_corp == "Test Alliance Please Ignore":
+                        continue
+                    if returned_player['characterName'] == standings_corp or standings_corp == returned_player['corporation'] or standings_corp == returned_player['alliance']:
                         bgcolor = standings_bgcolor(standings)
-
+                        break
+                    if returned_player['corp_id'] == 98255477:
+                        bgcolor = "excellent"
 
                 #TODO create player page that will display cached data, if none available, retrieve info for that person
                 unaffiliated += "<tr id=" + bgcolor + ">\n" \

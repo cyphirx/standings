@@ -9,7 +9,6 @@ Jinja2	2.7.1
 SQLAlchemy	0.8.4
 WTForms	1.0.5
 Werkzeug	0.9.4
-lxml	2.3.6
 simplejson	3.3.0
 
 
@@ -21,6 +20,7 @@ Bruce Kadine
 Doris Itsatrap
 Kashaus Chastot
 Marbo Lechter
+Maziwe Zakizo
 Nascent Omniscience
 NotContinuum
 Nove Takamachi
