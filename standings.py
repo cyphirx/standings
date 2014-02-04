@@ -1,4 +1,3 @@
-from pprint import pprint
 from flask import Flask, render_template, Markup, request, flash, url_for, redirect
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -72,7 +71,7 @@ def get_contacts():
     global contacts_cached
 
     if contacts_cached != "":
-        time_var = datetime.now(tz=GMT()) - timedelta(hour=1)
+        time_var = datetime.now(tz=GMT()) - timedelta(hours=1)
         if time_var < contacts_cached:
             print time_var, contacts_cached
             return
@@ -167,7 +166,6 @@ def display_player(name):
 
     return render_template('player.html', player=player)
 
-
 @app.route('/check', methods=['GET', 'POST'])
 def check():
     form = CheckerForm()
@@ -212,10 +210,10 @@ def check():
                                                           Standing.name == returned_player['alliance'])).first()
                 if u:
                     bgcolor = standings_bgcolor(u.value)
+                elif returned_player['corporation'] == "Isk Efficiency":
+                    bgcolor = "excellent"
                 else:
                     bgcolor = "neutral"
-                if returned_player['corp_id'] == 98255477:
-                    bgcolor = "excellent"
 
                 #TODO Link in player page to here
                 unaffiliated += "<tr id=" + bgcolor + ">\n" \
@@ -227,7 +225,8 @@ def check():
                                 + '<a href="http://evewho.com/pilot/' + returned_player['characterName'].replace(" ",
                                                                                                                  "+") \
                                 + '" target=\"_blank\"><img src="/static/img/evewho.ico" width="16" height="16"></a></td></td>\n'
-
+        # Minor kludge, but commit any db adds from lookup_player
+        db.session.commit()
         if unaffiliated == "":
             unaffiliated = "<tr><td colspan=2>No unaffiliated people!</td></tr>\n\r"
 
