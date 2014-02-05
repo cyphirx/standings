@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime, timedelta, date
 import urllib2
+import os
 from urllib import quote_plus
 from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -27,9 +28,19 @@ def ConfigSectionMap(section):
 
 app = Flask(__name__)
 app.secret_key = 'development key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
-db = SQLAlchemy(app)
 Config = ConfigParser.ConfigParser()
+
+# Read in configuration settings
+Config.read("settings.ini")
+
+# Heroku specific thing, needs correct formatting
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get['DATABASE_URL', 'sqlite:///cache.db' ]
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
+
+port = int(os.environ.get("PORT", 5000))
+
+
+db = SQLAlchemy(app)
 
 
 class Record(db.Model):
@@ -46,9 +57,6 @@ class Standing(db.Model):
     name = Column(Text, primary_key=True)
     value = Column(Integer, unique=False)
     added = Column(DateTime, unique=False)
-
-# Read in configuration settings
-Config.read("settings.ini")
 
 keyID = ConfigSectionMap("api")['keyid']
 vCode = ConfigSectionMap("api")['vcode']
@@ -259,6 +267,6 @@ def home():
 
 if __name__ == '__main__':
     get_contacts()
-    app.run(host=interface, debug=True)
+    app.run(host=interface, port=port, debug=True)
 
 # vim: set ts=4 sw=4 et :
