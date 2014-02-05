@@ -7,3 +7,7 @@ corpID = 222222
 apiURL = https://api.eveonline.com
 debug = True
 interface = 127.0.0.1
+
+[users]
+user = someuser
+password = somepassword

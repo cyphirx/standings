@@ -1,11 +1,10 @@
-from flask import Flask, render_template, Markup, request, flash, url_for, redirect
+from flask import Flask, render_template, Markup, request, flash, url_for, redirect, session
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime, timedelta, date
 import urllib2
 import os
 from urllib import quote_plus
-from forms import CheckerForm
 from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
 from sqlalchemy import Column, Integer, Text, DateTime, exists, or_
@@ -66,6 +65,10 @@ apiURL = ConfigSectionMap("general")['apiurl']
 debug = ConfigSectionMap("general")['debug']
 interface = ConfigSectionMap("general")['interface']
 
+# stopgap until we can get connected to Auth
+user = ConfigSectionMap("users")['user']
+password = ConfigSectionMap("users")['password']
+
 root = ""
 tree = ""
 contacts_cached = ""
@@ -81,7 +84,6 @@ def get_contacts():
     if contacts_cached != "":
         time_var = datetime.now(tz=GMT()) - timedelta(hours=1)
         if time_var < contacts_cached:
-            print time_var, contacts_cached
             return
 
     url = apiURL + "/corp/ContactList.xml.aspx?keyID=" + str(keyID) + "&vCode=" + vCode
@@ -217,11 +219,19 @@ def check():
                                                           Standing.name == returned_player['corporation'],
                                                           Standing.name == returned_player['alliance'])).first()
                 if u:
+                    if 'name' not in session:
+                        if u.value >= 0:
+                            continue
                     bgcolor = standings_bgcolor(u.value)
-                elif returned_player['corporation'] == "Isk Efficiency":
-                    bgcolor = "excellent"
                 else:
                     bgcolor = "neutral"
+
+                if returned_player['corporation'] == "Isk Efficiency" and 'name' in session:
+                    bgcolor = "excellent"
+                elif returned_player['corporation'] == "Isk Efficiency" and 'name' not in session:
+                    continue
+
+
 
                 #TODO Link in player page to here
                 unaffiliated += "<tr id=" + bgcolor + ">\n" \
@@ -259,13 +269,35 @@ def home():
 
     contents = ""
     for key, value in sorted(lists.iteritems(), key=lambda (k, v): (v, k)):
-        bgcolor = standings_bgcolor(value)
-        contents += "<tr id='%s'><td> %s </td><td> %s </td></tr>\n" % (bgcolor, key, str(value))
+        if 'name' not in session and value >= 0:
+            continue
+        else:
+            bgcolor = standings_bgcolor(value)
+            contents += "<tr id='%s'><td> %s </td><td> %s </td></tr>\n" % (bgcolor, key, str(value))
 
     return render_template("index.html", contacts=Markup(contents), cached=contacts_cached)
 
 
+@app.route('/signin', methods=['GET', 'POST'])
+def signin():
+    form = SigninForm()
+
+    if request.method == 'POST':
+        print "Page POST'd"
+        print user, password
+        if form.validate() == False:
+            return render_template('signin.html', form=form)
+        else:
+            session['name'] = form.name.data
+            print session['name']
+            return redirect(url_for('home'))
+
+    elif request.method == 'GET':
+        return render_template('signin.html', form=form)
+
+    print "what method is this?!"
 if __name__ == '__main__':
+    from forms import CheckerForm, SigninForm
     get_contacts()
     app.run(host=interface, port=port, debug=True)
 
