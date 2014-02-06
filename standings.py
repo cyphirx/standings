@@ -185,6 +185,8 @@ def check():
         unaffiliated = ""
         player_name = ""
         players = []
+        if len(block) > 50:
+            return "Queries are capped at 50 lines for now. Noncompliance will be met with deadly force and/or ponies."
 
         # Retrieve every playerid in system and compare to what we have locally
         for value in block[:]:
