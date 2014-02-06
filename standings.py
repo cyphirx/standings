@@ -58,18 +58,18 @@ class ContactList(db.Model):
     standing = Column(Integer, unique=False)
 
 
-keyID = ConfigSectionMap("api")['keyid']
-vCode = ConfigSectionMap("api")['vcode']
+keyID = os.environ.get('eve_api_keyid', ConfigSectionMap("api")['keyid'])
+vCode = os.environ.get('eve_api_vcode', ConfigSectionMap("api")['vcode'])
 
-corpID = ConfigSectionMap("general")['corpid']
-apiURL = ConfigSectionMap("general")['apiurl']
-debug = ConfigSectionMap("general")['debug']
-interface = ConfigSectionMap("general")['interface']
+corpID = os.environ.get('eve_corp_id', ConfigSectionMap("general")['corpid'])
+apiURL = os.environ.get('eve_api_url', ConfigSectionMap("general")['apiurl'])
+debug = os.environ.get('app_debug', ConfigSectionMap("general")['debug'])
+interface = os.environ.get('app_binding_address', ConfigSectionMap("general")['interface'])
 port = int(os.environ.get("PORT", 5000))
 
 # stopgap until we can get connected to Auth
-user = ConfigSectionMap("users")['user']
-password = ConfigSectionMap("users")['password']
+user = os.environ.get('app_admin_user', ConfigSectionMap("users")['user'])
+password = os.environ.get('app_admin_password', ConfigSectionMap("users")['password'])
 
 root = ""
 tree = ""
