@@ -7,7 +7,7 @@ import os
 from urllib import quote_plus
 from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
-from sqlalchemy import Column, Integer, Text, DateTime, exists, or_
+from sqlalchemy import Column, Integer, Text, DateTime, Float, exists, or_
 from functions import GMT, standings_bgcolor
 
 
@@ -33,24 +33,22 @@ Config = ConfigParser.ConfigParser()
 Config.read("settings.ini")
 
 # Heroku specific thing, needs correct formatting
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get['DATABASE_URL', 'sqlite:///cache.db' ]
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cache.db'
-
-port = int(os.environ.get("PORT", 5000))
-
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///cache.db')
 
 db = SQLAlchemy(app)
 
-
-class Record(db.Model):
-    pid = Column(Integer, primary_key=True)
-    name = Column(Text, unique=False)
-    corp = Column(Text, unique=False)
-    corpID = Column(Integer, unique=False)
+class CharacterInfo(db.Model):
+    created = Column(DateTime, unique=False)
+    modified = Column(DateTime, unique=False)
+    characterID = Column(Integer, primary_key=True)
+    characterName = Column(Text, unique=False)
+    corporation = Column(Text, unique=False)
+    corporationID = Column(Integer, unique=False)
+    corporationDate = Column(DateTime, unique=False)
     alliance = Column(Text, unique=False)
     allianceID = Column(Integer, unique=False)
-    added = Column(DateTime, unique=False)
-
+    allianceDate = Column(DateTime, unique=False)
+    securityStatus = Column(Float, unique=False)
 
 class Standing(db.Model):
     name = Column(Text, primary_key=True)
@@ -64,6 +62,7 @@ corpID = ConfigSectionMap("general")['corpid']
 apiURL = ConfigSectionMap("general")['apiurl']
 debug = ConfigSectionMap("general")['debug']
 interface = ConfigSectionMap("general")['interface']
+port = int(os.environ.get("PORT", 5000))
 
 # stopgap until we can get connected to Auth
 user = ConfigSectionMap("users")['user']
@@ -107,19 +106,19 @@ def get_contacts():
             continue
         s = Standing(name=standings_corp, value=standings, added=contacts_cached)
         db.session.add(s)
-        db.session.commit()
+    db.session.commit()
     print "Retrieved tree and updated"
 
 
 def lookup_player_id(child_id):
     expire_records = date.today() - timedelta(days=5)
 
-    player_exists = db.session.query(exists().where(Record.pid == child_id)).scalar()
+    player_exists = db.session.query(exists().where(CharacterInfo.characterID == child_id)).scalar()
 
     if player_exists:
-        player = Record.query.filter_by(pid=child_id).first()
+        player = CharacterInfo.query.filter_by(characterID=child_id).first()
 
-        if player.added.date() < expire_records:
+        if player.modified.date() < expire_records:
             db.session.delete(player)
             db.session.commit()
             player_exists = False
@@ -143,33 +142,34 @@ def lookup_player_id(child_id):
             if child.tag == "corporation":
                 corporation = child.text
             if child.tag == "corporationID":
-                corp_id = child.text
+                corporationID = child.text
             if child.tag == "allianceID":
-                alliance_id = child.text
+                allianceID = child.text
             if child.tag == "alliance":
                 alliance = child.text
             if child.tag == "characterName":
                 characterName = child.text
 
-        u = Record(pid=child_id, name=characterName, corp=corporation, corpID=corp_id, alliance=alliance,
-                   allianceID=alliance_id, added=datetime.now(tz=GMT()))
+        now = datetime.now(tz=GMT())
+        u = CharacterInfo(characterID=child_id, characterName=characterName, corporation=corporation, corporationID=corporationID, alliance=alliance,
+                   allianceID=allianceID, modified=now, created=now)
         db.session.add(u)
         db.session.commit()
 
     else:
-        corporation = player.corp
-        corp_id = player.corpID
+        corporation = player.corporation
+        corporationID = player.corporationID
         alliance = player.alliance
-        alliance_id = player.allianceID
-        characterName = player.name
+        allianceID = player.allianceID
+        characterName = player.characterName
 
-    return {"corporation": corporation, "corp_id": corp_id, "alliance_id": alliance_id, "alliance": alliance,
+    return {"corporation": corporation, "corporationID": corporationID, "allianceID": allianceID, "alliance": alliance,
             "characterName": characterName}
 
 #TODO: Increase usefulness of this, maybe a way to manually update or add notes on individuals, up in the air right now
 @app.route('/player/<name>')
 def display_player(name):
-    player = Record.query.filter_by(name=name).first_or_404()
+    player = CharacterInfo.query.filter_by(characterName=name).first_or_404()
     if player is None:
         flash('Player ' + name + ' not found!.')
         return redirect(url_for('index'))
