@@ -143,6 +143,7 @@ def lookup_player_id(child_id):
     if not player_exists:
         print "adding id " + child_id
         url = apiURL + "/eve/CharacterInfo.xml.aspx?characterID=" + str(child_id)
+        print url
         url_request = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
             f = urllib2.urlopen(url_request)
@@ -151,7 +152,7 @@ def lookup_player_id(child_id):
         lookup_tree = ET.parse(f)
         lookup_root = lookup_tree.getroot()
 
-        alliance_id = "0"
+        allianceID = "0"
         alliance = ""
 
         result = lookup_root.findall('./result/*')
