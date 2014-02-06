@@ -50,10 +50,13 @@ class CharacterInfo(db.Model):
     allianceDate = Column(DateTime, unique=False)
     securityStatus = Column(Float, unique=False)
 
-class Standing(db.Model):
-    name = Column(Text, primary_key=True)
-    value = Column(Integer, unique=False)
-    added = Column(DateTime, unique=False)
+class ContactList(db.Model):
+    created = Column(DateTime, unique=False)
+    modified = Column(DateTime, unique=False)
+    contactID = Column(Integer, primary_key=True)
+    contactName = Column(Text, unique=True)
+    standing = Column(Integer, unique=False)
+
 
 keyID = ConfigSectionMap("api")['keyid']
 vCode = ConfigSectionMap("api")['vcode']
@@ -93,7 +96,7 @@ def get_contacts():
         return "Error opening contact list retrieval URL"
     tree = ET.parse(f)
     root = tree.getroot()
-    Standing.query.delete()
+    ContactList.query.delete()
     db.session.commit()
 
     contacts_cached = datetime.now(tz=GMT())
@@ -104,7 +107,7 @@ def get_contacts():
         # Take out TEST addition to standings
         if standings_corp == "Test Alliance Please Ignore":
             continue
-        s = Standing(name=standings_corp, value=standings, added=contacts_cached)
+        s = ContactList(contactName=standings_corp, standing=standings, created=contacts_cached, modified=contacts_cached)
         db.session.add(s)
     db.session.commit()
     print "Retrieved tree and updated"
@@ -217,14 +220,14 @@ def check():
                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
                 returned_player = lookup_player_id(child_id)
-                u = db.session.query(Standing).filter(or_(Standing.name == returned_player['characterName'],
-                                                          Standing.name == returned_player['corporation'],
-                                                          Standing.name == returned_player['alliance'])).first()
+                u = db.session.query(ContactList).filter(or_(ContactList.contactName == returned_player['characterName'],
+                                                          ContactList.contactName == returned_player['corporation'],
+                                                          ContactList.contactName == returned_player['alliance'])).first()
                 if u:
                     if 'name' not in session:
-                        if u.value >= 0:
+                        if u.standing >= 0:
                             continue
-                    bgcolor = standings_bgcolor(u.value)
+                    bgcolor = standings_bgcolor(u.standing)
                 else:
                     bgcolor = "neutral"
 
