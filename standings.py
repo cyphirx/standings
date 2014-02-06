@@ -57,19 +57,33 @@ class ContactList(db.Model):
     contactName = Column(Text, unique=True)
     standing = Column(Integer, unique=False)
 
+if os.path.isfile('settings.ini'):
+    keyID = ConfigSectionMap("api")['keyid']
+    vCode = ConfigSectionMap("api")['vcode']
 
-keyID = os.environ.get('eve_api_keyid', ConfigSectionMap("api")['keyid'])
-vCode = os.environ.get('eve_api_vcode', ConfigSectionMap("api")['vcode'])
+    corpID = ConfigSectionMap("general")['corpid']
+    apiURL = ConfigSectionMap("general")['apiurl']
+    debug =  ConfigSectionMap("general")['debug']
+    interface =  ConfigSectionMap("general")['interface']
+    port = int(os.environ.get("PORT", 5000))
 
-corpID = os.environ.get('eve_corp_id', ConfigSectionMap("general")['corpid'])
-apiURL = os.environ.get('eve_api_url', ConfigSectionMap("general")['apiurl'])
-debug = os.environ.get('app_debug', ConfigSectionMap("general")['debug'])
-interface = os.environ.get('app_binding_address', ConfigSectionMap("general")['interface'])
-port = int(os.environ.get("PORT", 5000))
+    # stopgap until we can get connected to Auth
+    user =  ConfigSectionMap("users")['user']
+    password = ConfigSectionMap("users")['password']
 
-# stopgap until we can get connected to Auth
-user = os.environ.get('app_admin_user', ConfigSectionMap("users")['user'])
-password = os.environ.get('app_admin_password', ConfigSectionMap("users")['password'])
+else:
+    keyID = os.environ['eve_api_keyid']
+    vCode = os.environ['eve_api_vcode']
+
+    corpID = os.environ['eve_corp_id']
+    apiURL = os.environ['eve_api_url']
+    debug = os.environ['app_debug']
+    interface = os.environ['app_binding_address']
+    port = int(os.environ.get("PORT", 5000))
+
+    # stopgap until we can get connected to Auth
+    user = os.environ['app_admin_user']
+    password = os.environ['app_admin_password']
 
 root = ""
 tree = ""

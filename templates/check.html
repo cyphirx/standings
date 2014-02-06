@@ -18,6 +18,7 @@
         <div class="flash">{{ message }}</div>
     {% endfor %}
     <form action="{{ url_for('check') }}" method=post>
+        {{ form.hidden_tag() }}
 
         {{ form.players.label }}
         {{ form.players }}
