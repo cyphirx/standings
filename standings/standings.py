@@ -1,14 +1,16 @@
-from flask import Flask, render_template, Markup, request, flash, url_for, redirect, session
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from datetime import datetime, timedelta, date
 import urllib2
 import os
 from urllib import quote_plus
-from flask.ext.sqlalchemy import SQLAlchemy
 import ConfigParser
+
+from flask import Flask, render_template, Markup, request, flash, url_for, redirect, session
+from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, Text, DateTime, Float, exists, or_
-from functions import GMT, standings_bgcolor
+
+from standings.functions import GMT, standings_bgcolor
 
 
 def ConfigSectionMap(section):
@@ -216,6 +218,7 @@ def check():
             #TODO Redo this to remove check if no one hasn't already been added to records table
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
+        print url
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
             f = urllib2.urlopen(request_api)
@@ -317,7 +320,7 @@ def signin():
 
     print "what method is this?!"
 if __name__ == '__main__':
-    from forms import CheckerForm, SigninForm
+    from standings.forms import CheckerForm, SigninForm
     get_contacts()
     app.run(host=interface, port=port, debug=True)
 

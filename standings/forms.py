@@ -1,6 +1,7 @@
 from flask.ext.wtf import Form
 from wtforms import TextAreaField, SubmitField, PasswordField, TextField, validators
-import standings
+
+from standings import standings
 
 
 class CheckerForm(Form):
