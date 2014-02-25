@@ -3,14 +3,16 @@ from collections import OrderedDict
 from datetime import datetime, timedelta, date
 import urllib2
 import os
+from standings import app
 from urllib import quote_plus
 import ConfigParser
 
 from flask import Flask, render_template, Markup, request, flash, url_for, redirect, session
-from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, Text, DateTime, Float, exists, or_
 
 from standings.functions import GMT, standings_bgcolor
+from standings.models import db, initial_db, ContactList, CharacterInfo
+from standings.forms import CheckerForm, SigninForm
 
 
 def ConfigSectionMap(section):
@@ -27,37 +29,10 @@ def ConfigSectionMap(section):
     return dict1
 
 
-app = Flask(__name__)
-app.secret_key = 'development key'
 Config = ConfigParser.ConfigParser()
-
-# Read in configuration settings
 Config.read("settings.ini")
 
-# Heroku specific thing, needs correct formatting
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///cache.db')
-
-db = SQLAlchemy(app)
-
-class CharacterInfo(db.Model):
-    created = Column(DateTime, unique=False)
-    modified = Column(DateTime, unique=False)
-    characterID = Column(Integer, primary_key=True)
-    characterName = Column(Text, unique=False)
-    corporation = Column(Text, unique=False)
-    corporationID = Column(Integer, unique=False)
-    corporationDate = Column(DateTime, unique=False)
-    alliance = Column(Text, unique=False)
-    allianceID = Column(Integer, unique=False)
-    allianceDate = Column(DateTime, unique=False)
-    securityStatus = Column(Float, unique=False)
-
-class ContactList(db.Model):
-    created = Column(DateTime, unique=False)
-    modified = Column(DateTime, unique=False)
-    contactID = Column(Integer, primary_key=True)
-    contactName = Column(Text, unique=True)
-    standing = Column(Integer, unique=False)
+initial_db()
 
 if os.path.isfile('settings.ini'):
     keyID = ConfigSectionMap("api")['keyid']
@@ -91,8 +66,6 @@ root = ""
 tree = ""
 contacts_cached = ""
 
-db.create_all()
-
 # All global pieces set, let's build some code
 
 def get_contacts():
@@ -120,9 +93,6 @@ def get_contacts():
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         standings_corp = child.get('contactName')
         standings = int(child.get('standing'))
-        # Take out TEST addition to standings
-        if standings_corp == "Test Alliance Please Ignore":
-            continue
         s = ContactList(contactName=standings_corp, standing=standings, created=contacts_cached, modified=contacts_cached)
         db.session.add(s)
     db.session.commit()
@@ -218,7 +188,6 @@ def check():
             #TODO Redo this to remove check if no one hasn't already been added to records table
         # Build URL and retrieve from API
         url = apiURL + "/eve/CharacterID.xml.aspx?names=" + quote_plus(player_name, ",")
-        print url
         request_api = urllib2.Request(url, headers={"Accept": "application/xml"})
         try:
             f = urllib2.urlopen(request_api)
@@ -306,21 +275,18 @@ def signin():
     form = SigninForm()
 
     if request.method == 'POST':
-        print "Page POST'd"
-        print user, password
         if form.validate() == False:
             return render_template('signin.html', form=form)
         else:
             session['name'] = form.name.data
-            print session['name']
             return redirect(url_for('home'))
 
     elif request.method == 'GET':
         return render_template('signin.html', form=form)
-
     print "what method is this?!"
+
+
 if __name__ == '__main__':
-    from standings.forms import CheckerForm, SigninForm
     get_contacts()
     app.run(host=interface, port=port, debug=True)
 
