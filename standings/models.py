@@ -1,8 +1,5 @@
 from flask.ext.sqlalchemy import SQLAlchemy
 
-from standings.standings import app
-
-
 db = SQLAlchemy(app)
 
 
@@ -24,3 +21,5 @@ class Standing(db.Model):
     name = db.Column(db.Text, primary_key=True)
     value = db.Column(db.Integer, unique=False)
     added = db.Column(db.DateTime, unique=False)
+
+# vim: set ts=4 sw=4 et :
