@@ -23,9 +23,10 @@ class ContactList(db.Model):
     contactName = db.Column(db.Text, unique=True)
     standing = db.Column(db.Integer, unique=False)
 
+
 class WalletJournal(db.Model):
     date = db.Column(db.DateTime, unique=False)
-    refID = db.Column(db.Integer, unique=True)
+    refID = db.Column(db.Integer, unique=True, primary_key=True)
     refTypeID = db.Column(db.Integer, unique=False)
     ownerName1 = db.Column(db.Text, unique=False)
     ownerID1 = db.Column(db.Integer, unique=False)
@@ -40,11 +41,13 @@ class WalletJournal(db.Model):
     owner2TypeID = db.Column(db.Integer, unique=False)
     wallet = db.Column(db.Integer, unique=False)
 
-class Notes(db.Model):
-    contactID = db.Column(db.Text, unique=False)
-    note = db.Column(db.Text, unique=False)
-    added = db.Column(db.Text, unique=False)
 
+# Setting table name because table does not have a primary key
+class Notes(db.Model):
+    noteID = db.Column(db.Integer, unique=True, primary_key=True)
+    contactID = db.Column(db.Integer, unique=False)
+    note = db.Column(db.Text, unique=False)
+    added = db.Column(db.DateTime, unique=False)
 
 
 def initial_db():

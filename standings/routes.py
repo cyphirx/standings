@@ -7,12 +7,12 @@ from standings import app
 from urllib import quote_plus
 import ConfigParser
 
-from flask import Flask, render_template, Markup, request, flash, url_for, redirect, session
-from sqlalchemy import Column, Integer, Text, DateTime, Float, exists, or_
+from flask import render_template, Markup, request, flash, url_for, redirect, session
+from sqlalchemy import exists, or_
 
 from standings.functions import GMT, standings_bgcolor
-from standings.models import db, initial_db, ContactList, CharacterInfo
-from standings.forms import CheckerForm, SigninForm
+from standings.models import db, initial_db, ContactList, CharacterInfo, WalletJournal, Notes
+from standings.forms import CheckerForm, SigninForm, NotesForm
 
 
 def ConfigSectionMap(section):
@@ -157,14 +157,26 @@ def lookup_player_id(child_id):
             "characterName": characterName}
 
 #TODO: Increase usefulness of this, maybe a way to manually update or add notes on individuals, up in the air right now
-@app.route('/player/<name>')
+#TODO: Add note count to displays
+#TODO: Add ability to remove notes
+@app.route('/player/<name>', methods=['GET', 'POST'])
 def display_player(name):
+    form = NotesForm()
     player = CharacterInfo.query.filter_by(characterName=name).first_or_404()
     if player is None:
         flash('Player ' + name + ' not found!.')
         return redirect(url_for('index'))
+    player_id = player.characterID
 
-    return render_template('player.html', player=player)
+    if request.method == 'POST':
+        value = form.notes.data
+        now = datetime.now(tz=GMT())
+        note = Notes(contactID=player_id,note=value,added=now)
+        db.session.add(note)
+        db.session.commit()
+
+    notes = Notes.query.filter_by(contactID=player_id).all()
+    return render_template('player.html', player=player, notes=notes, form=form)
 
 @app.route('/check', methods=['GET', 'POST'])
 def check():

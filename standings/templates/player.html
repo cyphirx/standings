@@ -1,13 +1,35 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<div>
+<h3>Character Info</h3>
+  Character: {{ player.characterName }} <br />
 
-  Character: {{ player.name }} <br />
-
-  Corp: {{ player.corp }} <br />
+  Corp: {{ player.corporation }} <br />
 
   Alliance: {{ player.alliance }}<br />
 
-  Added: {{ player.added }}<br />
+  Added: {{ player.created }}<br />
 
+  Modified: {{ player.modified }}<br />
+</div>
+<div style="padding-top: 10px">
+  <h3>Notes:</h3>
+  <table>
+  {% for note in notes %}
+     <tr>
+      <td> {{ note.added }} </td><td style="padding-left: 25px">{{ note.note }}</td>
+     </tr>
+  {% endfor %}
+  </table>
+</div>
+<div style="align-content: center">
+<h3>Add Notes</h3>
+<form action="{{ url_for('display_player',name=player.characterName) }}" method=post>
+    {{ form.hidden_tag() }}
+    {{ form.notes }}
+
+    {{ form.submit }}
+</form>
+</div>
 {%  endblock %}

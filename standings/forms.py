@@ -50,5 +50,8 @@ class SigninForm(Form):
             return True
 
 
+class NotesForm(Form):
+    notes = TextAreaField("Notes")
+    submit = SubmitField("Add Note")
 
 # vim: set ts=4 sw=4 et :
