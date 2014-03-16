@@ -215,6 +215,8 @@ def check():
         for child in uid_root.findall('./result/rowset/[@name="characters"]/*'):
             contact = child.get('name')
             child_id = child.get('characterID')
+            if contact == "":
+                continue
             if int(child_id) == 0:
                 unaffiliated += "<tr><td>" + contact + "</td><td>Bad name</tr>"
             else:
