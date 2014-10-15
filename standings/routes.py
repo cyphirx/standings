@@ -3,6 +3,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta, date
 import urllib2
 import os
+import math
 from standings import app
 from urllib import quote_plus
 import ConfigParser
@@ -92,7 +93,14 @@ def get_contacts():
 
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         standings_corp = child.get('contactName')
-        standings = int(child.get('standing'))
+
+        standNum = float(child.get('standing'))
+        if standNum < 0:
+            standings = math.floor(standNum)
+        elif standNum > 0:
+            standings = math.ceil(standNum)
+        else:
+            standings = 0
         s = ContactList(contactName=standings_corp, standing=standings, created=contacts_cached, modified=contacts_cached)
         db.session.add(s)
     db.session.commit()
@@ -270,7 +278,13 @@ def home():
     #TODO Redo this to use db instead
     for child in root.findall('./result/rowset/[@name="corporateContactList"]/*'):
         contact = child.get('contactName')
-        standing = int(child.get('standing'))
+        standNum = float(child.get('standing'))
+        if standNum < 0:
+            standing = math.floor(standNum)
+        elif standNum > 0:
+            standing = math.ceil(standNum)
+        else:
+            standing = 0
         lists.update({contact: standing})
 
     contents = ""
